@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "es6",
@@ -25,8 +26,9 @@
     "paths": {
       "*": ["node_modules/*", "src/*"]
     },
-    "typeRoots": ["node_modules/@types"] // Added for type resolution
+    "typeRoots": ["node_modules/@types", "./src/types"], // Added custom type definitions folder
+    "types": ["node"] // Ensures Node.js types are included
   },
-  "include": ["./src/**/*.ts"],
+  "include": ["./src/**/*.ts", "./src/types/**/*.ts"], // Include custom type definitions
   "exclude": ["node_modules"]
 }

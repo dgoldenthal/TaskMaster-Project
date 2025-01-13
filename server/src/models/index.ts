@@ -1,37 +1,32 @@
 // src/models/index.ts
 
 import { Sequelize } from 'sequelize';
+import { sequelize } from '../config/database';
 import Project from './project.model';
 import Task from './task.model';
 import User from './user.model';
 import ProjectMember from './projectMembers.model';
-import config from '../config/config'; // Database configuration
 
-const env = process.env.NODE_ENV || 'development';
-const dbConfig = config[env as keyof typeof config];
-
-const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
-  host: dbConfig.host,
-  dialect: dbConfig.dialect,
-  logging: dbConfig.logging,
-  ...(dbConfig.dialectOptions && { dialectOptions: dbConfig.dialectOptions }),
-});
-
-// Initialize models
+// Object to hold initialized models
 const db: { [key: string]: any } = {};
 
-db.Project = Project.initModel(sequelize);
-db.Task = Task.initModel(sequelize);
-db.User = User.initModel(sequelize);
-db.ProjectMember = ProjectMember.initModel(sequelize);
+// Initialize models
+const models = [Project, Task, User, ProjectMember];
+models.forEach((model) => {
+  model.initModel(sequelize);
+  db[model.name] = model;
+});
 
 // Setup associations
-if (db.Project.associate) db.Project.associate(db);
-if (db.Task.associate) db.Task.associate(db);
-if (db.User.associate) db.User.associate(db);
-if (db.ProjectMember.associate) db.ProjectMember.associate(db);
+Object.values(db).forEach((model) => {
+  if (model.associate) {
+    model.associate(db);
+  }
+});
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
+// Add sequelize and Sequelize to the db object
+// For compatibility with other modules and reuse
+Object.assign(db, { sequelize, Sequelize });
 
+export { Project, User, Task, ProjectMember }; // Export individual models if needed
 export default db;

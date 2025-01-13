@@ -1,4 +1,22 @@
 // src/types/index.ts
+
+// Export the User interface directly, removing the import
+export interface User {
+  id: number;
+  email: string;
+  role: 'user' | 'admin'; // Add other roles as needed
+}
+
+// Extend the Express namespace to include the User type on the Request object
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+// Define the Project interface
 export interface Project {
   id: number;
   title: string;
@@ -10,6 +28,7 @@ export interface Project {
   progress?: number;
 }
 
+// DTO for creating a project
 export interface CreateProjectDto {
   title: string;
   description?: string;
@@ -18,8 +37,10 @@ export interface CreateProjectDto {
   dueDate?: Date;
 }
 
+// DTO for updating a project
 export interface UpdateProjectDto extends Partial<CreateProjectDto> {}
 
+// Define the Task interface
 export interface Task {
   id: number;
   title: string;
@@ -32,6 +53,7 @@ export interface Task {
   };
 }
 
+// Interface for drag-and-drop results
 export interface DragResult {
   draggableId: string;
   type: string;

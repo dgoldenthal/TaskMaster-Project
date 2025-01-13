@@ -38,10 +38,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       return res.status(400).json({ message: error });
     }
 
+    console.log(`Attempting to log in user with email: ${email}`);
+
     const [user] = await sequelize.query<User>(
       `
       SELECT id, username, email, password, role 
-      FROM users 
+      FROM "Users" 
       WHERE email = :email
     `,
       {
@@ -51,13 +53,15 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     );
 
     if (!user) {
-      console.warn(`Login failed: User not found for email ${email}`);
+      console.warn(`Login failed: No user found for email: ${email}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    console.log(`User found: ${JSON.stringify(user)}`);
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      console.warn(`Login failed: Invalid password for email ${email}`);
+      console.warn(`Login failed: Invalid password for email: ${email}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 

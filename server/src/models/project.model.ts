@@ -1,6 +1,20 @@
-import { Model, DataTypes, Sequelize } from 'sequelize';
+import { Model, DataTypes, Sequelize, Association } from 'sequelize';
+import User from './user.model'; // Import the User model to define associations
 
 class Project extends Model {
+  public id!: number;
+  public name!: string;
+  public description?: string;
+  public start_date!: Date;
+  public due_date?: Date;
+  public ownerId!: number;
+
+  // Associations
+  public static associations: {
+    owner: Association<Project, User>;
+  };
+
+  // Initialize the model
   static initModel(sequelize: Sequelize) {
     return Project.init(
       {
@@ -16,6 +30,7 @@ class Project extends Model {
         },
         description: {
           type: DataTypes.TEXT,
+          allowNull: true,
         },
         start_date: {
           type: DataTypes.DATE,
@@ -24,15 +39,33 @@ class Project extends Model {
         },
         due_date: {
           type: DataTypes.DATE,
+          allowNull: true,
+        },
+        ownerId: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'Users', // Reference the Users table
+            key: 'id',
+          },
+          onDelete: 'CASCADE', // Ensure cascading deletes
         },
       },
       {
         sequelize,
         modelName: 'Project',
         tableName: 'Projects',
-        timestamps: true, // Enable Sequelize-managed createdAt and updatedAt
+        timestamps: true, // Enable createdAt and updatedAt
       }
     );
+  }
+
+  // Define associations
+  static associate(models: { User: typeof User }) {
+    Project.belongsTo(models.User, {
+      foreignKey: 'ownerId',
+      as: 'owner',
+    });
   }
 }
 

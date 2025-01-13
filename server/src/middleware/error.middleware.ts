@@ -2,78 +2,42 @@
 import { Request, Response, NextFunction } from 'express';
 
 export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational = true
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, AppError.prototype);
-  }
-}
+  statusCode: number;
+  details?: any;
 
-interface ErrorResponse {
-  status: 'error' | 'fail';
-  message: string;
-  stack?: string;
-  errors?: any;
+  constructor(statusCode: number, message: string, details?: any) {
+    super(message);
+    this.statusCode = statusCode;
+    this.details = details;
+
+    // Ensure the name of this error is the same as the class name
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.name = this.constructor.name;
+
+    // Capture the stack trace (optional)
+    Error.captureStackTrace(this, this.constructor);
+  }
 }
 
 export const errorHandler = (
-  err: Error | AppError,
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction
-) => {
-  const errorResponse: ErrorResponse = {
-    status: 'error',
-    message: err.message || 'Internal server error'
-  };
-
+): Response => {
   if (err instanceof AppError) {
-    errorResponse.status = err.statusCode < 500 ? 'fail' : 'error';
-    if (process.env.NODE_ENV === 'development') {
-      errorResponse.stack = err.stack;
-    }
-    return res.status(err.statusCode).json(errorResponse);
-  }
-
-  // Handle Sequelize errors
-  if (err.name === 'SequelizeValidationError') {
-    errorResponse.status = 'fail';
-    errorResponse.message = 'Validation error';
-    errorResponse.errors = (err as any).errors.map((e: any) => ({
-      field: e.path,
-      message: e.message
-    }));
-    return res.status(400).json(errorResponse);
-  }
-
-  // Handle JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    errorResponse.status = 'fail';
-    errorResponse.message = 'Invalid token';
-    return res.status(401).json(errorResponse);
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    errorResponse.status = 'fail';
-    errorResponse.message = 'Token expired';
-    return res.status(401).json(errorResponse);
+    const { statusCode, message, details } = err;
+    return res.status(statusCode).json({
+      status: 'error',
+      message,
+      ...(details && { details }),
+    });
   }
 
   // Handle unknown errors
-  if (process.env.NODE_ENV === 'development') {
-    errorResponse.stack = err.stack;
-  }
-  
-  res.status(500).json(errorResponse);
-};
-
-export const asyncHandler = (fn: Function) => (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
+  console.error('Unhandled error:', err);
+  return res.status(500).json({
+    status: 'error',
+    message: 'An unexpected error occurred',
+  });
 };

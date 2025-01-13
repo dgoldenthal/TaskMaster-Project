@@ -1,12 +1,11 @@
-// server/src/routes/slack.routes.ts
 import { Router } from 'express';
+import { handleSlackEvents } from '../webhooks/slack.webhook';
 import {
   connectSlack,
   handleOAuthCallback,
   getChannels,
-  updateConfig
+  updateConfig,
 } from '../controllers/slack.controller';
-import { handleSlackEvents } from '../webhooks/slack.webhook';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();

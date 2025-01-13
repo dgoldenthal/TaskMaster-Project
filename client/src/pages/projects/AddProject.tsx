@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // React Router for navigation
 import { Calendar, Plus, Trash } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -14,6 +15,7 @@ const AddProject: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [availableUsers, setAvailableUsers] = useState<string[]>([]);
   const [availableTasks, setAvailableTasks] = useState<string[]>([]);
+  const navigate = useNavigate(); // For navigation
 
   // Fetch users and tasks from the backend
   useEffect(() => {
@@ -32,7 +34,7 @@ const AddProject: React.FC = () => {
   }, []);
 
   const addTask = (task: string) => {
-    if (!tasks.includes(task)) setTasks([...tasks, task]);
+    if (task && !tasks.includes(task)) setTasks([...tasks, task]);
   };
 
   const removeTask = (task: string) => {
@@ -40,7 +42,7 @@ const AddProject: React.FC = () => {
   };
 
   const addMember = (member: string) => {
-    if (!teamMembers.includes(member)) setTeamMembers([...teamMembers, member]);
+    if (member && !teamMembers.includes(member)) setTeamMembers([...teamMembers, member]);
   };
 
   const removeMember = (member: string) => {
@@ -48,6 +50,18 @@ const AddProject: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    // Validation: Check if all required fields are filled
+    if (!title || !description || !startDate || !dueDate || tasks.length === 0 || teamMembers.length === 0) {
+      alert('All fields are required, including at least one task and one team member!');
+      return;
+    }
+
+    // Validation: Check that startDate is before dueDate
+    if (new Date(startDate) >= new Date(dueDate)) {
+      alert('Start date must be earlier than the due date!');
+      return;
+    }
+
     const projectData = {
       title,
       description,
@@ -58,18 +72,20 @@ const AddProject: React.FC = () => {
     };
 
     try {
-      const response = await fetch('/api/projects', {
+      const response = await fetch('http://localhost:5000/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`, // Ensure token is included
         },
         body: JSON.stringify(projectData),
       });
 
       if (response.ok) {
         alert('Project saved successfully!');
+        navigate('/projects'); // Redirect to the projects page
       } else {
-        alert('Failed to save the project');
+        alert('Failed to save the project.');
       }
     } catch (error) {
       console.error('Error saving project:', error);
