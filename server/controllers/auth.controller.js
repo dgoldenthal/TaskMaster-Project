@@ -33,3 +33,39 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: 'Failed to login' });
     }
 };
+
+// User Registration
+exports.register = async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        // Check if the user already exists
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create the user
+        const newUser = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+        });
+
+        // Return a success response
+        res.status(201).json({
+            message: 'User registered successfully',
+            user: {
+                id: newUser.id,
+                name: newUser.name,
+                email: newUser.email,
+            },
+        });
+    } catch (error) {
+        console.error('Error registering user:', error.message);
+        res.status(500).json({ message: 'Failed to register user' });
+    }
+};
